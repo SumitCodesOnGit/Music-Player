@@ -1,0 +1,106 @@
+import tkinter as tk
+from tkinter import filedialog, messagebox, simpledialog
+from database_manager import DataBaseManager
+from music_player import MusicPlayer
+from album import Album
+from song import Song
+import os
+
+class UIManager:
+
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Advanced Music Player")
+        self.db = DataBaseManager()
+        self.player = MusicPlayer()
+
+        self.album_listbox = tk.Listbox(root, width=30)
+        self.album_listbox.pack(side=tk.LEFT, fill=tk.Y)
+        self.album_listbox.bind("<<ListboxSelect>>",self.on_album_select)
+
+        self.song_listbox = tk.Listbox(root, width=50)
+        self.song_listbox.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+
+        button_frame = tk.Frame(root)
+        button_frame.pack(side=tk.RIGHT, fill=tk.Y)
+
+        tk.Button(button_frame, text="Play", command=self.play_selected).pack()
+        tk.Button(button_frame, text="Pause", command=self.player.pause).pack()
+        tk.Button(button_frame, text="Resume", command=self.player.resume).pack()
+        tk.Button(button_frame, text="Stop", command=self.player.stop).pack()
+        tk.Button(button_frame, text="Add Album", command=self.add_album).pack()
+        tk.Button(button_frame, text="Add Song", command=self.add_song).pack()
+
+        self.albums = []
+        self.songs = []
+
+        self.load_albums()
+
+
+
+    def load_albums(self):
+        self.albums = self.db.get_all_albums()
+        self.album_listbox.delete(0, tk.END)
+        for album in self.albums:
+            self.album_listbox.insert(tk.END, f"{album[1]} by {album[2]}")
+
+
+    def on_album_select(self,event):
+        selection = self.album_listbox.curselection()
+        if selection:
+            album_id = self.albums[selection[0]][0]
+            self.songs = self.db.get_songs_by_album_id(album_id)
+            self.song_listbox.delete(0, tk.END)
+            for song in self.songs:
+                self.song_listbox.insert(tk.END, f"{song[1]} - {song[2]}")
+
+
+    def play_selected(self):
+        index = self.song_listbox.curselection()
+        if index:
+            song = self.songs[index[0]]
+            self.player.play(song[4])
+
+
+    def add_album(self):
+        name =  simpledialog.askstring("Album Name", "Enter Album Name: ")
+        if not name:
+            return
+        artist =  simpledialog.askstring("Artist","Enter Artist Name: ")
+        if not artist:
+            return
+        year = simpledialog.askstring("Year", "Enter Year: ")
+        if year is None:
+            year = ""
+        genre = simpledialog.askstring("Genre", "Enter Genre: ")
+        if genre is None:
+            genre = ""
+        
+        self.db.add_album(name, artist, year, genre)
+        self.load_albums()
+
+
+
+    def add_song(self):
+        selection = self.album_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("No Album Selected", "please select an album to add the song to.")
+            return
+        
+        album_id = self.albums[selection[0]][0]
+        file_path = filedialog.askopenfilename(filetypes=[("MP3 files", "*.mp3")])
+        if file_path:
+            title = os.path.basename(file_path)
+            try:
+                self.db.add_song((title, "Unknown", album_id, file_path, "Unknown"))
+                self.on_album_select(None)
+            except Exception as e:
+                messagebox.showerror("Error", str(e))
+
+
+
+            
+
+
+
+

@@ -1,0 +1,20 @@
+We got 6 python files:
+
+1. main.py -  entry point of the app. Intialises the the Tkinter UI
+
+2. database_manager.py - handles sql database operations.
+
+3. music_player.py - controls music playback using pygame.mixer. handles play, pause, resume and stop.
+
+4. ui_manager.py - builds GUI with Tkinter.
+
+5. song.py - defines the song class
+
+6. album.py - defines album class.
+
+
+
+
+
+
+

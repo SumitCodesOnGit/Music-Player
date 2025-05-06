@@ -69,5 +69,17 @@ class DataBaseManager:
         cursor = self.conn.cursor()
         cursor.execute("SELECT * FROM songs")
         return cursor.fetchall()
+    
+
+    def delete_album(self, album_id):
+        self.conn.execute("DELETE FROM songs WHERE album_id = ?",(album_id,))
+        self.conn.execute("DELETE FROM albums WHERE id = ?", (album_id,))
+        self.conn.commit()
+
+
+    def rename_album(self, album_id, new_name):
+        query = "UPDATE albums SET name = ? WHERE id = ?"
+        self.conn.execute(query,(new_name, album_id))
+        self.conn.commit()
 
 

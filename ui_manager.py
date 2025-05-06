@@ -46,12 +46,16 @@ class UIManager:
         button_frame = tk.Frame(root, padx=10, pady=10)
         button_frame.pack(side=tk.RIGHT, fill=tk.Y)
 
-        tk.Button(button_frame, text="Play", command=self.play_selected).pack()
-        tk.Button(button_frame, text="Pause", command=self.player.pause).pack()
-        tk.Button(button_frame, text="Resume", command=self.player.resume).pack()
-        tk.Button(button_frame, text="Stop", command=self.player.stop).pack()
-        tk.Button(button_frame, text="Add Album", command=self.add_album).pack()
-        tk.Button(button_frame, text="Add Song", command=self.add_song).pack()
+        ttk.Button(button_frame, text="Play", command=self.play_selected).pack(pady=5)
+        ttk.Button(button_frame, text="Pause", command=self.player.pause).pack(pady=5)
+        ttk.Button(button_frame, text="Resume", command=self.player.resume).pack(pady=5)
+        ttk.Button(button_frame, text="Stop", command=self.player.stop).pack(pady=5)
+        ttk.Button(button_frame, text="Add Album", command=self.add_album).pack(pady=5)
+        ttk.Button(button_frame, text="Add Song", command=self.add_song).pack(pady=5)
+        
+        # rename and delete buttons
+        ttk.Button(button_frame, text="Rename Album", command=self.rename_album).pack(pady=5)
+        ttk.Button(button_frame, text="Delete Album", command=self.delete_album).pack(pady=5)
 
         self.albums = []
         self.songs = []
@@ -64,7 +68,7 @@ class UIManager:
         self.albums = self.db.get_all_albums()
         self.album_listbox.delete(0, tk.END)
         for album in self.albums:
-            self.album_listbox.insert(tk.END, f"{album[1]} by {album[2]}")
+            self.album_listbox.insert(tk.END, f"{album[1]}")
 
 
     def on_album_select(self,event):
@@ -118,6 +122,46 @@ class UIManager:
                 self.on_album_select(None)
             except Exception as e:
                 messagebox.showerror("Error", str(e))
+
+
+
+    
+    def rename_album(self):
+        selection = self.album_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection", "Select an album to rename.")
+            return
+        
+        album = self.albums[selection[0]]
+        album_id = album[0]
+        print("Rename function triggered")   # for debug
+        print(f"Selected album ID and name:  {album[0]}  {album[1]} by {album[2]}")
+        new_name = simpledialog.askstring("Rename Album",f"Enter new name for {album[1]}: ")
+        if new_name and new_name.strip():
+            try:
+                self.db.rename_album(album[0], new_name.strip())
+                print("Renamed to: ", new_name) # for debug
+                self.load_albums()
+            except Exception as e:
+                messagebox.showerror("Rename Error", str(e))
+        else:
+            print("No new name entered.") # Debug line
+
+
+    def delete_album(self):
+        selection = self.album_listbox.curselection()
+        if not selection:
+            messagebox.showwarning("No Selection","Select an album to delete.")
+            return
+        
+        album = self.albums[selection[0]]
+        confirm = messagebox.askyesno("Confirm Delete",f"Delete album {album[1]} and its songs?")
+        if confirm:
+            self.db.delete_album(album[0])
+            self.load_albums()
+            self.song_listbox.delete(0, tk.END)
+
+
 
 
 
